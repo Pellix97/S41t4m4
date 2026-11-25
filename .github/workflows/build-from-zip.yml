@@ -1,0 +1,41 @@
+name: Build S41t4m4 da ZIP
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Estrai lo ZIP (versione piu' alta)
+        run: |
+          rm -rf project
+          ls -1 *.zip || { echo "Nessuno ZIP nella root del repo: carica Houd1n1-vX.Y.Z.zip"; exit 1; }
+          ZIP=$(ls -1 S41t4m4-v*.zip | sort -V | tail -1)
+          echo "Uso: $ZIP"
+          unzip -q "$ZIP" -d project
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Compila
+        working-directory: project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s41t4m4-debug-apk
+          path: project/app/build/outputs/apk/debug/*.apk
+          
